@@ -6,14 +6,13 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (hGetLine, hIsEOF, stdin, hSetBuffering)
 
-
-main :: IO ConfigVar 
+main :: IO() 
 main = do
   mode <- getArgs
   case mode of
     [arg] -> case arg of
-              "local" -> getLocal
-              "prod"  -> getProd 
+              "local" ->  getLocal
+              "prod"  ->  getProd 
               _ -> argError
     _ -> argError
     where argError = do
