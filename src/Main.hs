@@ -1,6 +1,6 @@
 module Main where
 
-import Env
+import Env ( ConfigVar, getLocal, getProd )
 import Control.Monad (forever, when)
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)

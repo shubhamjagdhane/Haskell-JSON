@@ -1,3 +1,5 @@
+module Temp where
+{-
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Temp where
@@ -18,5 +20,4 @@ type MySchema = [schema|
 
 getResult :: IO (Object MySchema)
 getResult = either fail return =<< eitherDecodeFileStrict "./src/example.json"
-
-
+-}
