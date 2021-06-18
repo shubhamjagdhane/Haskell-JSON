@@ -26,19 +26,19 @@ data ConfigVar = ConfigVar {
 instance ToJSON ConfigVar where
   -- this generates a Value
   toJSON (ConfigVar dbName port host username password) =
-      object ["dbName" .= dbName, "port" .= port, "host" .= host, "username" .= username, "password" .= password]
+    object ["dbName" .= dbName, "port" .= port, "host" .= host, "username" .= username, "password" .= password]
 
   -- this encodes directly to a bytestring Builder
   toEncoding (ConfigVar dbName port host username password) =
-      pairs ("dbName" .= dbName <> "port" .= port <> "host" .= host <> "username" .= username <> "password" .= password) 
+    pairs ("dbName" .= dbName <> "port" .= port <> "host" .= host <> "username" .= username <> "password" .= password) 
 
 instance FromJSON ConfigVar where
   parseJSON = withObject "ConfigVar" $ \v -> ConfigVar
-      <$> v .: "dbName"
-      <*> v .: "port"
-      <*> v .: "host"
-      <*> v .: "username"
-      <*> v .: "password"
+    <$> v .: "dbName"
+    <*> v .: "port"
+    <*> v .: "host"
+    <*> v .: "username"
+    <*> v .: "password"
 
 data Env = Env {
     local :: ConfigVar
@@ -49,16 +49,16 @@ data Env = Env {
 instance ToJSON Env where
   -- this generates a Value
   toJSON (Env local prod) =
-      object ["local" .= local, "prod" .= prod]
+    object ["local" .= local, "prod" .= prod]
 
   -- this encodes directly to a bytestring Builder
   toEncoding (Env local prod) =
-      pairs ("local" .= local <> "prod" .= prod) 
+    pairs ("local" .= local <> "prod" .= prod) 
 
 instance FromJSON Env where
   parseJSON = withObject "Env" $ \v -> Env
-      <$> v .: "local"
-      <*> v .: "prod"
+    <$> v .: "local"
+    <*> v .: "prod"
    
 
 loadEnv :: IO Env
