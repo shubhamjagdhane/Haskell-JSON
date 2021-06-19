@@ -13,18 +13,29 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
 
+library
+  exposed-modules:  Env
+  ghc-options:      -Wall -fwarn-tabs
+  build-depends:    base >=4.7 && <5
+                  , aeson
+                  , bytestring
+                  , QuickCheck
+  hs-source-dirs: src
+  default-language: Haskell2010
+
 executable Haskell-JSON
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Json, Env
+  other-modules:       Env
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                        , aeson
+                       , bytestring
 test-suite tests
-  ghc-options:    -Wall -fno-warn-orphans
-  type:           exitcode-stdio-1.0
-  main-is:        tests.hs
-  hs-source-dirs: tests
-  build-depends:   base
-                 , QuickCheck
+  ghc-options:      -Wall -fno-warn-orphans
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  hs-source-dirs:   tests
+  build-depends:    base
+                    , QuickCheck
   default-language: Haskell2010      

@@ -3,16 +3,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Env where
-import Data.Aeson
-  ( pairs,
-    (.:),
-    withObject,
-    eitherDecodeFileStrict,
-    object,
-    FromJSON(parseJSON),
-    KeyValue((.=)),
-    ToJSON(toJSON, toEncoding), fromJSON )
 
+import qualified Data.ByteString.Lazy as B
+import Data.Aeson
 import GHC.Generics
 
 data ConfigVar = ConfigVar {
@@ -24,52 +17,73 @@ data ConfigVar = ConfigVar {
   } deriving (Generic, Show)
 
 instance ToJSON ConfigVar where
-  -- this generates a Value
-  toJSON (ConfigVar dbName port host username password) =
-    object ["dbName" .= dbName, "port" .= port, "host" .= host, "username" .= username, "password" .= password]
-
-  -- this encodes directly to a bytestring Builder
-  toEncoding (ConfigVar dbName port host username password) =
-    pairs ("dbName" .= dbName <> "port" .= port <> "host" .= host <> "username" .= username <> "password" .= password) 
-
+  toEncoding = genericToEncoding defaultOptions
 instance FromJSON ConfigVar where
-  parseJSON = withObject "ConfigVar" $ \v -> ConfigVar
-    <$> v .: "dbName"
-    <*> v .: "port"
-    <*> v .: "host"
-    <*> v .: "username"
-    <*> v .: "password"
-
-data Env = Env {
+  
+data Env1 = Env1 {
     local :: ConfigVar
   , prod :: ConfigVar
   } deriving (Generic, Show)  
 
+instance ToJSON Env1 where
+instance FromJSON Env1 where
 
-instance ToJSON Env where
-  -- this generates a Value
-  toJSON (Env local prod) =
-    object ["local" .= local, "prod" .= prod]
+newtype Env2 = Env2 {
+    loc :: ConfigVar
+  } deriving (Generic, Show)  
 
-  -- this encodes directly to a bytestring Builder
-  toEncoding (Env local prod) =
-    pairs ("local" .= local <> "prod" .= prod) 
+instance ToJSON Env2 where
+  toJSON (Env2 loc) =
+    object ["local" .= loc]
 
-instance FromJSON Env where
-  parseJSON = withObject "Env" $ \v -> Env
-    <$> v .: "local"
-    <*> v .: "prod"
-   
+  toEncoding (Env2 loc) =
+    pairs ("local" .= loc)    
 
-loadEnv :: IO Env
-loadEnv = either fail return =<< eitherDecodeFileStrict "./src/env.json"
+instance FromJSON Env2 where
+  parseJSON = withObject "Env2" $ \v -> Env2
+    <$> v .: "local"  
+ 
+newtype Env3 = Env3 {
+    pro :: ConfigVar
+  } deriving (Generic, Show)  
 
-getLocal :: IO ()
-getLocal = do 
-  result <- loadEnv
-  putStrLn $show (local result)
+instance ToJSON Env3 where
+  toJSON (Env3 pro) =
+    object ["prod" .= pro]
 
-getProd :: IO ()
-getProd = do 
-  result <- loadEnv
-  putStrLn $ show (prod result)
+  toEncoding (Env3 pro) =
+    pairs ("prod" .= pro) 
+
+instance FromJSON Env3 where
+  parseJSON = withObject "Env3" $ \v -> Env3
+    <$> v .: "prod"
+
+loadFile :: IO B.ByteString
+loadFile = do B.readFile "./src/env.json"
+
+getConfig :: String -> IO ()
+getConfig which = do
+  result <- loadFile
+  case goGetConfig which result of
+    Just x ->  putStrLn . show $ x
+    Nothing -> putStrLn $"Please make sure that .json file has '" ++ which ++ "' configuration"
+
+goGetConfig ::  String -> B.ByteString -> Maybe ConfigVar
+goGetConfig which xs = 
+  case decode xs :: Maybe Env1 of
+    Just x  -> 
+      case which of
+        "local" -> local <$> Just x 
+        "prod"  -> prod <$> Just x
+    Nothing -> 
+      case which of
+        "local" -> 
+          case decode xs :: Maybe Env2 of
+            Just y  -> loc <$> Just y
+            Nothing -> Nothing
+        "prod" ->
+          case decode xs :: Maybe Env3 of
+            Just y  -> pro <$> Just y
+            Nothing -> Nothing
+
+     
