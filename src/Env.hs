@@ -17,46 +17,21 @@ data ConfigVar = ConfigVar {
   } deriving (Generic, Show)
 
 instance ToJSON ConfigVar where
-  toEncoding = genericToEncoding defaultOptions
 instance FromJSON ConfigVar where
-  
-data Env1 = Env1 {
+
+newtype Local = Local {
     local :: ConfigVar
-  , prod :: ConfigVar
   } deriving (Generic, Show)  
 
-instance ToJSON Env1 where
-instance FromJSON Env1 where
+instance ToJSON Local where
+instance FromJSON Local where
 
-newtype Env2 = Env2 {
-    loc :: ConfigVar
+newtype Prod = Prod {
+    prod :: ConfigVar
   } deriving (Generic, Show)  
 
-instance ToJSON Env2 where
-  toJSON (Env2 loc) =
-    object ["local" .= loc]
-
-  toEncoding (Env2 loc) =
-    pairs ("local" .= loc)    
-
-instance FromJSON Env2 where
-  parseJSON = withObject "Env2" $ \v -> Env2
-    <$> v .: "local"  
- 
-newtype Env3 = Env3 {
-    pro :: ConfigVar
-  } deriving (Generic, Show)  
-
-instance ToJSON Env3 where
-  toJSON (Env3 pro) =
-    object ["prod" .= pro]
-
-  toEncoding (Env3 pro) =
-    pairs ("prod" .= pro) 
-
-instance FromJSON Env3 where
-  parseJSON = withObject "Env3" $ \v -> Env3
-    <$> v .: "prod"
+instance ToJSON Prod where
+instance FromJSON Prod where
 
 loadFile :: IO B.ByteString
 loadFile = do B.readFile "./src/env.json"
@@ -70,20 +45,14 @@ getConfig which = do
 
 goGetConfig ::  String -> B.ByteString -> Maybe ConfigVar
 goGetConfig which xs = 
-  case decode xs :: Maybe Env1 of
-    Just x  -> 
-      case which of
-        "local" -> local <$> Just x 
-        "prod"  -> prod <$> Just x
-    Nothing -> 
-      case which of
-        "local" -> 
-          case decode xs :: Maybe Env2 of
-            Just y  -> loc <$> Just y
-            Nothing -> Nothing
-        "prod" ->
-          case decode xs :: Maybe Env3 of
-            Just y  -> pro <$> Just y
-            Nothing -> Nothing
+  case which of
+    "local" -> 
+      case decode xs :: Maybe Local of
+        Just y  -> local <$> Just y
+        Nothing -> Nothing
+    "prod" ->
+      case decode xs :: Maybe Prod of
+        Just y  -> prod <$> Just y
+        Nothing -> Nothing
 
      
