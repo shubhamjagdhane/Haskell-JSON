@@ -1,7 +1,6 @@
 module Main where
 
 import Test.QuickCheck
-import Env
 main :: IO ()
 main = do
   runQc
