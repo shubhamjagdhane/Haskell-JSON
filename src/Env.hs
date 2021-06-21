@@ -13,7 +13,7 @@ data ConfigVar = ConfigVar {
   , host     :: String
   , username :: String
   , password :: String
-  } deriving (Generic, Show)
+  } deriving (Generic, Show, Eq)
 
 instance ToJSON ConfigVar where
 instance FromJSON ConfigVar where
@@ -53,5 +53,4 @@ goGetConfig which xs =
       case decode xs :: Maybe Prod of
         Just y  -> prod <$> Just y
         Nothing -> Nothing
-
      

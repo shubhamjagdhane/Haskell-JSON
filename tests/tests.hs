@@ -1,21 +1,27 @@
+{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
+import Env
+import Data.Aeson
+import qualified Data.ByteString.Lazy as B
 import Test.QuickCheck
+
 main :: IO ()
 main = do
-  runQc
+  runLocal
+  runProd
 
--- Implement Gen for String and Int
--- Make ByteString which can have 'local' or 'prod' or both key
--- the bytestring object must contain variables in the ConfigVar
+runLocal :: IO ()
+runLocal = do
+  quickCheck testForLocal
+  quickCheck testInvalidLocal
 
-
-genInt :: Gen Int 
-genInt = elements [0..9]
-
-genChar :: Gen Char 
-genChar = elements ['a'..'z'] -- 568
-
+runProd :: IO ()
+runProd = do
+  quickCheck testForProd
+  quickCheck testInvalidProd
 
 prop_additionGreater :: Int -> Bool
 prop_additionGreater x = x + 1 > x
@@ -23,21 +29,50 @@ prop_additionGreater x = x + 1 > x
 runQc :: IO ()
 runQc = quickCheck prop_additionGreater
 
+genInt :: Gen Int 
+genInt = elements [3000..32000]
 
-{-
+genChar :: Gen Char 
+genChar = elements ['a'..'z']
 
-prop_LocalEnv :: String -> Bool 
-prop_LocalEnv x = 
-  encode (Env1 {local = ConfigVar {dbName=x, port=3306, host="127.0.0.1",username=x, password=x}, prod = ConfigVar {dbName=x, port=3306, host="127.0.0.1",username=x, password=x}})
+localConfig :: ConfigVar
+localConfig = ConfigVar "local" 3306 "127.0.0.1" "test" "password"
 
-encode (Person {name = "Joe", age = 12})
-{local = ConfigVar {dbName="local", port=3306, host="127.0.0.1",username="test", password="password"}, prod = ConfigVar {dbName="production", port=3306, host="127.0.0.1",username="username", password="super-secret-password"}}
+localValue :: Local
+localValue = Local localConfig
 
+prodConfig :: ConfigVar
+prodConfig = ConfigVar "production" 3306 "127.0.0.1" "username" "super-secret-password"
 
-encode (Env1 {local = ConfigVar {dbName="local", port=3306, host="127.0.0.1",username="test", password="password"}, prod = ConfigVar {dbName="production", port=3306, host="127.0.0.1",username="username", password="super-secret-password"}})
+prodValue :: Prod
+prodValue = Prod prodConfig
 
+encodeLocal :: B.ByteString
+encodeLocal = encode localValue
 
-encode (Env2 {loc = ConfigVar {dbName="local", port=3306, host="127.0.0.1",username="test", password="password"}})
+encodeProd :: B.ByteString
+encodeProd = encode prodValue
 
-encode (Env3 {pro = ConfigVar {dbName="local", port=3306, host="127.0.0.1",username="test", password="password"}})
--}
+testForLocal :: Bool 
+testForLocal = 
+  case goGetConfig "local" encodeLocal of
+    Just x  -> localConfig == x
+    Nothing -> False
+
+testForProd :: Bool 
+testForProd = 
+  case goGetConfig "prod" encodeProd of
+    Just x  -> prodConfig == x
+    Nothing -> False    
+
+testInvalidLocal :: Bool
+testInvalidLocal =
+  case goGetConfig "local" encodeProd of
+    Just _  -> False
+    Nothing -> True   
+
+testInvalidProd :: Bool
+testInvalidProd =
+  case goGetConfig "prod" encodeLocal of
+    Just _  -> False
+    Nothing -> True    
