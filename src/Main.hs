@@ -1,10 +1,9 @@
 module Main where
 
 import Env ( getConfig )
-import Control.Monad (forever, when)
+import Control.Monad (when)
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitSuccess)
-import System.IO (hGetLine, hIsEOF, stdin, hSetBuffering)
+import System.Exit (exitFailure)
 
 main :: IO() 
 main = do       
