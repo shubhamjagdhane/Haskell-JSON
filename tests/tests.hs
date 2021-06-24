@@ -23,18 +23,6 @@ runProd = do
   quickCheck testForProd
   quickCheck testInvalidProd
 
-prop_additionGreater :: Int -> Bool
-prop_additionGreater x = x + 1 > x
-
-runQc :: IO ()
-runQc = quickCheck prop_additionGreater
-
-genInt :: Gen Int 
-genInt = elements [3000..32000]
-
-genChar :: Gen Char 
-genChar = elements ['a'..'z']
-
 localConfig :: ConfigVar
 localConfig = ConfigVar "local" 3306 "127.0.0.1" "test" "password"
 
@@ -54,25 +42,21 @@ encodeProd :: B.ByteString
 encodeProd = encode prodValue
 
 testForLocal :: Bool 
-testForLocal = 
-  case goGetConfig "local" encodeLocal of
-    Just x  -> localConfig == x
-    Nothing -> False
+testForLocal = checkValid localConfig $ goGetConfig "local" encodeLocal 
 
 testForProd :: Bool 
-testForProd = 
-  case goGetConfig "prod" encodeProd of
-    Just x  -> prodConfig == x
-    Nothing -> False    
+testForProd = checkValid prodConfig $ goGetConfig "prod" encodeProd
+
+checkValid :: ConfigVar -> Maybe ConfigVar -> Bool
+checkValid config (Just x) =  x == config 
+checkValid _ Nothing       = False
 
 testInvalidLocal :: Bool
-testInvalidLocal =
-  case goGetConfig "local" encodeProd of
-    Just _  -> False
-    Nothing -> True   
+testInvalidLocal = checkInvalid $ goGetConfig "local" encodeProd
 
 testInvalidProd :: Bool
-testInvalidProd =
-  case goGetConfig "prod" encodeLocal of
-    Just _  -> False
-    Nothing -> True    
+testInvalidProd = checkInvalid $ goGetConfig "prod" encodeLocal
+  
+checkInvalid :: Maybe ConfigVar -> Bool
+checkInvalid (Just _) =  False
+checkInvalid Nothing  = True     

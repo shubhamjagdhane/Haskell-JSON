@@ -39,18 +39,10 @@ getConfig :: String -> IO ()
 getConfig which = do
   result <- loadFile
   case goGetConfig which result of
-    Just x ->  putStrLn . show $ x
+    Just x  -> putStrLn . show $ x
     Nothing -> putStrLn $"Please make sure that .json file has '" ++ which ++ "' configuration"
 
 goGetConfig ::  String -> B.ByteString -> Maybe ConfigVar
-goGetConfig which xs = 
-  case which of
-    "local" -> 
-      case decode xs :: Maybe Local of
-        Just y  -> local <$> Just y
-        Nothing -> Nothing
-    "prod" ->
-      case decode xs :: Maybe Prod of
-        Just y  -> prod <$> Just y
-        Nothing -> Nothing
-     
+goGetConfig "local" xs = local <$> (decode xs :: Maybe Local)
+goGetConfig "prod"  xs = prod  <$> (decode xs :: Maybe Prod)
+goGetConfig _  xs      = Nothing
